@@ -97,6 +97,57 @@ Bens.Func.SameColor = function(CA, CB)
 	return false
 end
 
+Bens.Func.Rainbox = function ()
+	local Rainbox 	= {}
+	Rainbox.state 	= 0
+	Rainbox.a 		= 255
+	Rainbox.r 		= 255
+	Rainbox.g 		= 0
+	Rainbox.b 		= 0
+	Rainbox.func = function()
+		local self = Rainbox
+		if self.state == 0 then
+			self.g = self.g + 1
+			if self.g == 255 then
+				self.state = 1
+			end
+		end
+		if self.state == 1 then
+			self.r = self.r - 1
+			if self.r == 0 then
+				self.state = 2
+			end
+		end
+		if self.state == 2 then
+			self.b = self.b + 1
+			if self.b == 255 then
+				self.state = 3
+			end
+		end
+		if self.state == 3 then
+			self.g = self.g - 1
+			if self.g == 0 then
+				self.state = 4
+			end
+		end
+		if self.state == 4 then
+			self.r = self.r + 1
+			if self.r == 255 then
+				self.state = 5
+			end
+		end
+		if self.state == 5 then
+			self.b = self.b - 1
+			if self.b == 0 then
+				self.state = 0
+			end
+		end
+		return Color(self.r,self.g,self.b,self.a)
+	end
+	return Rainbox.func
+end
+
+
 if CLIENT then
 	net.Receive( "BensLib", function( len )
 		local cmd = net.ReadUInt(4)
@@ -169,7 +220,12 @@ if CLIENT then
 		else
 			L:SetSize(SIZE,SIZE)
 		end
-		if IMG != nil then L:SetImage(IMG) end
+		if isstring(IMG) then
+			L:SetImage(IMG)
+		else 
+			print(IMG)
+			L:SetMaterial(IMG)
+		end
 		return L
 	end
 	Bens.Derma.FLabel = function(PARENT,TXT,FONT,DOCK,SIZE,ALIGN,TCOLOR)
@@ -243,7 +299,8 @@ if SERVER then
 end
 
 // Shared
-Bens.LuaLoadDir = function (PATH,LuaState,RECURSIVE)
+Bens.LuaLoadDir = function (PATH,LuaState,RECURSIVE,Execute)
+	if Execute == nil then Execute = true end
 	local files, directories = file.Find(PATH.."*", "LUA")
 	if files == nil then return end
 	for k, v in pairs(files) do		
@@ -253,17 +310,17 @@ Bens.LuaLoadDir = function (PATH,LuaState,RECURSIVE)
 				AddCSLuaFile(PATH..v)
 			else
 				print("[JustBenDev Lua Loader] : Lua "..PATH..v.." added.")
-				include(PATH..v)
+				if Execute then include(PATH..v) end
 			end
 		elseif LuaState == "SH" then
 			if SERVER then
 				AddCSLuaFile(PATH..v)
 			end
 			print("[JustBenDev Lua Loader] : Lua "..PATH..v.." added.")
-			include(PATH..v)
+			if Execute then include(PATH..v) end
 		elseif LuaState == "SV" and SERVER then
 			print("[JustBenDev Lua Loader] : Lua "..PATH..v.." added.")
-			include(PATH..v)
+			if Execute then include(PATH..v) end
 		end
 	end
 end
